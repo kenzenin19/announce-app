@@ -4,8 +4,8 @@ import type { MetadataRoute } from 'next'
 // Change name / short_name / colors here whenever you like.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Announcements',
-    short_name: 'Announce',
+    name: 'CSB Announcements',
+    short_name: 'CSB Announce',
     description: 'Announcements with due dates and your own do dates.',
     start_url: '/',
     scope: '/',

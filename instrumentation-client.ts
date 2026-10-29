@@ -85,7 +85,7 @@ function showPopup(mode: 'prompt' | 'ios') {
   } as Partial<CSSStyleDeclaration>)
 
   const title = document.createElement('div')
-  title.textContent = 'Install Announcements'
+  title.textContent = 'Install CSB Announcements'
   Object.assign(title.style, { fontWeight: '600', marginBottom: '4px' })
 
   const text = document.createElement('div')
