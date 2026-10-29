@@ -10,11 +10,20 @@ type Item = { id: string; title: string; due_at: string | null; do_at: string }
 export default async function MyTasksPage() {
   const { supabase, user } = await getCurrentUser()
 
-  const { data: rows, error } = await supabase
-    .from('do_dates')
-    .select('do_at, announcements(id, title, due_at)')
-    .eq('user_id', user.id)
-    .order('do_at', { ascending: true })
+  // Both lookups at the same time
+  const [{ data: rows, error }, { data: dueSoon }] = await Promise.all([
+    supabase
+      .from('do_dates')
+      .select('do_at, announcements(id, title, due_at)')
+      .eq('user_id', user.id)
+      .order('do_at', { ascending: true }),
+    // Announcements still due in the future (we hide the ones already planned below)
+    supabase
+      .from('announcements')
+      .select('id, title, due_at')
+      .gte('due_at', new Date().toISOString())
+      .order('due_at', { ascending: true }),
+  ])
 
   const items: Item[] = []
   for (const r of rows ?? []) {
@@ -26,13 +35,6 @@ export default async function MyTasksPage() {
   const upcoming = items.filter((i) => new Date(i.do_at).getTime() >= now)
   const passed = items.filter((i) => new Date(i.do_at).getTime() < now)
   const plannedIds = new Set(items.map((i) => i.id))
-
-  // Announcements still due in the future that this user has not planned yet
-  const { data: dueSoon } = await supabase
-    .from('announcements')
-    .select('id, title, due_at')
-    .gte('due_at', new Date().toISOString())
-    .order('due_at', { ascending: true })
 
   const unplanned = (dueSoon ?? []).filter((a) => !plannedIds.has(a.id))
 

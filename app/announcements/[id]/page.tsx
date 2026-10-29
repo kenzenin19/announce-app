@@ -16,21 +16,25 @@ export default async function AnnouncementPage({
   const { id } = await params
   const { supabase, user, role } = await getCurrentUser()
 
-  const { data: a } = await supabase
-    .from('announcements')
-    .select('id, title, body, due_at, created_at, created_by, profiles!announcements_created_by_fkey(name)')
-    .eq('id', id)
-    .maybeSingle()
+  // Both lookups at the same time
+  const [{ data: a }, { data: mine }] = await Promise.all([
+    supabase
+      .from('announcements')
+      .select(
+        'id, title, body, due_at, created_at, created_by, profiles!announcements_created_by_fkey(name)'
+      )
+      .eq('id', id)
+      .maybeSingle(),
+    // This user's own do date for this announcement (if any)
+    supabase
+      .from('do_dates')
+      .select('do_at')
+      .eq('announcement_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   if (!a) notFound()
-
-  // This user's own do date for this announcement (if any)
-  const { data: mine } = await supabase
-    .from('do_dates')
-    .select('do_at')
-    .eq('announcement_id', a.id)
-    .eq('user_id', user.id)
-    .maybeSingle()
 
   const canDelete =
     role === 'admin' || (role === 'mod' && a.created_by === user.id)

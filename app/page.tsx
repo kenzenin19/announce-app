@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { NotificationBell } from '@/components/notification-bell'
-import { logout } from './login/actions'
-import { Button } from '@/components/ui/button'
 import { DueBadge } from '@/components/due-badge'
+import { LogoutButton } from '@/components/logout-button'
 import { getCurrentUser, canPost } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
 import { PostedBanner } from '@/components/posted-banner'
@@ -16,18 +15,23 @@ export default async function Home({
   const { posted } = await searchParams
   const { supabase, user, name, role } = await getCurrentUser()
 
-  // Soonest due date first; announcements with no due date go last
-  const { data: announcements, error } = await supabase
-    .from('announcements')
-    .select('id, title, body, due_at, created_at, profiles!announcements_created_by_fkey(name)')
-    .order('due_at', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: false })
-
-  // This user's own do dates, so we can mark them in the list
-  const { data: myDoDates } = await supabase
-    .from('do_dates')
-    .select('announcement_id, do_at')
-    .eq('user_id', user.id)
+  // Ask the database both questions at the same time (faster than one after the other)
+  const [{ data: announcements, error }, { data: myDoDates }] =
+    await Promise.all([
+      // Soonest due date first; announcements with no due date go last
+      supabase
+        .from('announcements')
+        .select(
+          'id, title, body, due_at, created_at, profiles!announcements_created_by_fkey(name)'
+        )
+        .order('due_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false }),
+      // This user's own do dates, so we can mark them in the list
+      supabase
+        .from('do_dates')
+        .select('announcement_id, do_at')
+        .eq('user_id', user.id),
+    ])
 
   const doMap = new Map<string, string>(
     (myDoDates ?? []).map((d) => [d.announcement_id as string, d.do_at as string])
@@ -44,11 +48,7 @@ export default async function Home({
         </div>
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <form action={logout}>
-            <Button type="submit" variant="outline" size="sm">
-              Log out
-            </Button>
-          </form>
+          <LogoutButton />
         </div>
       </header>
 
