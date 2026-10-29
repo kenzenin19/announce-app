@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { Shell } from '@/components/app-shell'
 import { getCurrentUser, canPost } from '@/lib/auth'
 import { NewAnnouncementForm } from './form'
 
@@ -10,12 +12,20 @@ export default async function NewAnnouncementPage() {
   if (!canPost(role)) redirect('/')
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-4">
-      <Link href="/" className="text-sm text-muted-foreground underline">
-        &larr; Back
-      </Link>
-      <h1 className="mt-3 mb-4 text-xl font-semibold">New announcement</h1>
-      <NewAnnouncementForm />
-    </main>
+    <Shell>
+      <div>
+        <Link href="/" className="back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Announcements
+        </Link>
+        <h1 className="title" style={{ marginTop: 8 }}>
+          New announcement
+        </h1>
+        <p className="sub">Everyone gets a notification when you post.</p>
+      </div>
+      <div className="panel panel-pad">
+        <NewAnnouncementForm />
+      </div>
+    </Shell>
   )
 }

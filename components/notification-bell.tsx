@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { formatDateTime } from '@/lib/format'
+import { formatShort } from '@/lib/format'
 import { PushToggle } from '@/components/push-toggle'
 
 type Notif = {
@@ -80,8 +80,15 @@ export function NotificationBell() {
         setOpen(false)
       }
     }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('mousedown', onClick)
-    return () => document.removeEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
   }, [])
 
   const unread = items.filter((n) => !n.read).length
@@ -103,31 +110,25 @@ export function NotificationBell() {
   }
 
   return (
-    <div className="relative" ref={boxRef}>
+    <div className="anchor" ref={boxRef}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-muted/50"
+        aria-expanded={open}
+        aria-haspopup="true"
+        className="iconbtn"
       >
-        <Bell className="h-4 w-4" />
-        {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
+        <Bell size={20} strokeWidth={1.75} aria-hidden="true" />
+        {unread > 0 && <span className="badge">{unread > 9 ? '9+' : unread}</span>}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 max-w-[90vw] rounded-lg border bg-background shadow-lg">
-          <div className="flex items-center justify-between border-b px-3 py-2">
-            <span className="text-sm font-medium">Notifications</span>
+        <div className="pop">
+          <div className="pop-h">
+            <span>Notifications</span>
             {unread > 0 && (
-              <button
-                type="button"
-                onClick={markAllRead}
-                className="text-xs text-muted-foreground underline"
-              >
+              <button type="button" onClick={markAllRead} className="linklike">
                 Mark all as read
               </button>
             )}
@@ -136,27 +137,25 @@ export function NotificationBell() {
           <PushToggle variant="compact" />
 
           {items.length === 0 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">
+            <p className="empty" style={{ margin: 16 }}>
               No notifications yet.
             </p>
           ) : (
-            <ul className="max-h-80 overflow-y-auto">
+            <ul className="pop-scroll">
               {items.map((n) => (
                 <li key={n.id}>
                   <button
                     type="button"
                     onClick={() => openNotif(n)}
-                    className={`block w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/50 ${
-                      n.read ? '' : 'bg-indigo-50'
-                    }`}
+                    className={`notif ${n.read ? '' : 'notif-unread'}`}
                   >
-                    <span
-                      className={`block text-sm ${n.read ? '' : 'font-medium'}`}
-                    >
-                      {n.message}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {formatDateTime(n.created_at)}
+                    <span className="notif-dot" aria-hidden="true" />
+                    <span>
+                      <span className="notif-msg">{n.message}</span>
+                      <span className="notif-time">
+                        {formatShort(n.created_at)}
+                        {n.read ? '' : ' · unread'}
+                      </span>
                     </span>
                   </button>
                 </li>

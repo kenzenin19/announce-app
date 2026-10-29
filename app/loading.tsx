@@ -1,18 +1,34 @@
+// Same frame as the real screens: flat grey bars at their real size, no shimmer.
 export default function Loading() {
   return (
-    <main className="mx-auto w-full max-w-2xl p-4" aria-busy="true">
-      <div className="space-y-2 py-4">
-        <div className="h-6 w-48 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+    <>
+      <div className="topbar" aria-hidden="true">
+        <div className="wrap topbar-in">
+          <div className="sk" style={{ width: 28, height: 28, borderRadius: 7 }} />
+          <div className="sk" style={{ width: 140, height: 16 }} />
+        </div>
       </div>
-      <div className="mt-4 space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-24 animate-pulse rounded-lg border bg-muted/40"
-          />
-        ))}
-      </div>
-    </main>
+      <main className="wrap page" aria-busy="true" aria-label="Loading">
+        <div>
+          <div className="sk" style={{ width: 200, height: 30 }} />
+          <div className="sk" style={{ width: 280, height: 20, marginTop: 8 }} />
+        </div>
+        <div className="panel">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                padding: '16px 20px',
+                borderTop: i ? '1px solid var(--rule)' : 'none',
+              }}
+            >
+              <div className="sk" style={{ width: '55%', height: 22 }} />
+              <div className="sk" style={{ width: '85%', height: 20, marginTop: 6 }} />
+              <div className="sk" style={{ width: '30%', height: 18, marginTop: 8 }} />
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   )
 }

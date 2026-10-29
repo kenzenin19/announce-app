@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import { NotificationBell } from '@/components/notification-bell'
+import { Plus } from 'lucide-react'
+import { Shell } from '@/components/app-shell'
 import { DueBadge } from '@/components/due-badge'
-import { LogoutButton } from '@/components/logout-button'
-import { getCurrentUser, canPost } from '@/lib/auth'
-import { authorName, formatDateTime } from '@/lib/format'
 import { PostedBanner } from '@/components/posted-banner'
 import { PushToggle } from '@/components/push-toggle'
+import { getCurrentUser, canPost } from '@/lib/auth'
+import { authorName, dueStatus, formatShort } from '@/lib/format'
 
 export default async function Home({
   searchParams,
@@ -13,7 +13,7 @@ export default async function Home({
   searchParams: Promise<{ posted?: string }>
 }) {
   const { posted } = await searchParams
-  const { supabase, user, name, role } = await getCurrentUser()
+  const { supabase, user, role } = await getCurrentUser()
 
   // Ask the database both questions at the same time (faster than one after the other)
   const [{ data: announcements, error }, { data: myDoDates }] =
@@ -37,89 +37,89 @@ export default async function Home({
     (myDoDates ?? []).map((d) => [d.announcement_id as string, d.do_at as string])
   )
 
+  // The one finding: what needs attention now
+  const list = announcements ?? []
+  const soon = list.filter((a) => dueStatus(a.due_at) === 'soon').length
+  const unplanned = list.filter((a) => {
+    const s = dueStatus(a.due_at)
+    return (s === 'soon' || s === 'ok') && !doMap.has(a.id)
+  }).length
+
+  const parts: string[] = []
+  if (soon) parts.push(`${soon} due within 48 hours`)
+  if (unplanned) parts.push(`${unplanned} without a do date`)
+  const finding = error
+    ? ''
+    : list.length === 0
+      ? 'Nothing posted yet.'
+      : parts.length
+        ? parts.join(' · ')
+        : 'Nothing due soon.'
+
   return (
-    <main className="mx-auto w-full max-w-2xl p-4">
-      <header className="flex items-center justify-between gap-4 py-4">
+    <Shell>
+      <div className="titlerow">
         <div>
-          <h1 className="text-xl font-semibold">Announcements</h1>
-          <p className="text-sm text-muted-foreground">
-            Hi, {name} · {role}
-          </p>
+          <h1 className="title">Announcements</h1>
+          {finding && <p className="sub">{finding}</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <NotificationBell />
-          <LogoutButton />
-        </div>
-      </header>
+        {canPost(role) && (
+          <Link
+            href="/announcements/new"
+            className="btn btn-primary hide-phone"
+          >
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
+            New announcement
+          </Link>
+        )}
+      </div>
 
       {posted && <PostedBanner />}
 
       <PushToggle variant="banner" />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {canPost(role) && (
-          <Link
-            href="/announcements/new"
-            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-          >
-            + New announcement
-          </Link>
-        )}
-        <Link
-          href="/my-tasks"
-          className="inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium"
-        >
-          My tasks
-        </Link>
-      </div>
-
       {error && (
-        <p className="rounded-lg border border-red-200 p-4 text-sm text-red-600">
-          Could not load announcements: {error.message}
+        <p className="notice notice-err" role="alert">
+          Couldn&apos;t load announcements: {error.message}
         </p>
       )}
 
-      {!error && (!announcements || announcements.length === 0) && (
-        <p className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+      {!error && list.length === 0 && (
+        <p className="empty">
           No announcements yet.
+          {canPost(role) ? ' Post the first one with New announcement.' : ''}
         </p>
       )}
 
-      <ul className="space-y-3">
-        {announcements?.map((a) => {
-          const myDoAt = doMap.get(a.id)
-          return (
-            <li key={a.id}>
-              <Link
-                href={`/announcements/${a.id}`}
-                className="block rounded-lg border p-4 transition hover:bg-muted/50"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="font-medium">{a.title}</h2>
-                  <DueBadge dueAt={a.due_at} />
-                </div>
-                {a.body && (
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {a.body}
-                  </p>
-                )}
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>
-                    {authorName(a.profiles)
-                      ? `Posted by ${authorName(a.profiles)}`
-                      : ''}
-                  </span>
-                  {myDoAt && (
-                    <span className="font-medium text-indigo-600">
-                      My do date: {formatDateTime(myDoAt)}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
-    </main>
+      {list.length > 0 && (
+        <ul className="panel rows">
+          {list.map((a) => {
+            const myDoAt = doMap.get(a.id)
+            const author = authorName(a.profiles)
+            return (
+              <li key={a.id}>
+                <Link href={`/announcements/${a.id}`} className="row">
+                  <div style={{ minWidth: 0 }}>
+                    <h2 className="row-title">{a.title}</h2>
+                    {a.body && <p className="row-body">{a.body}</p>}
+                    <p className="row-meta">
+                      {author ? `Posted by ${author}` : 'Posted'}
+                      {' · '}
+                      {formatShort(a.created_at)}
+                    </p>
+                  </div>
+                  <div className="row-side">
+                    <DueBadge dueAt={a.due_at} />
+                    {myDoAt ? (
+                      <span className="do">Do {formatShort(myDoAt)}</span>
+                    ) : null}
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Shell>
   )
 }

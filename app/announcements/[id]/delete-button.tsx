@@ -1,20 +1,24 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-
-export function DeleteButton({ action }: { action: () => Promise<void> }) {
+export function DeleteButton({
+  action,
+  title,
+}: {
+  action: () => Promise<void>
+  title: string
+}) {
   return (
     <form
       action={action}
       onSubmit={(e) => {
-        if (!confirm('Delete this announcement? This cannot be undone.')) {
+        if (!confirm(`Delete "${title}"? This cannot be undone.`)) {
           e.preventDefault()
         }
       }}
     >
-      <Button type="submit" variant="outline" size="sm">
-        Delete
-      </Button>
+      <button type="submit" className="btn btn-danger">
+        Delete announcement
+      </button>
     </form>
   )
 }

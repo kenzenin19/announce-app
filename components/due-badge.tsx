@@ -1,25 +1,20 @@
-import { dueStatus, formatDateTime } from '@/lib/format'
+import { dueStatus, formatShort } from '@/lib/format'
 
+// The due date as plain text. Only urgent states get a pill, one mark per row.
 export function DueBadge({ dueAt }: { dueAt: string | null }) {
   const status = dueStatus(dueAt)
 
   if (status === 'none' || !dueAt) {
-    return <span className="text-xs text-muted-foreground">No due date</span>
+    return <span className="due due-none">No due date</span>
   }
 
-  const styles = {
-    overdue: 'bg-red-100 text-red-700',
-    soon: 'bg-amber-100 text-amber-800',
-    ok: 'bg-green-100 text-green-700',
-  }[status]
-
-  const label = status === 'overdue' ? 'Overdue' : 'Due'
-
   return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}
-    >
-      {label}: {formatDateTime(dueAt)}
+    <span className="due">
+      {status === 'overdue' && <span className="pill pill-neg">Overdue</span>}
+      {status === 'soon' && <span className="pill pill-warn">Due soon</span>}
+      <span>
+        {status === 'overdue' ? 'Was due' : 'Due'} {formatShort(dueAt)}
+      </span>
     </span>
   )
 }

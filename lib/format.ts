@@ -9,6 +9,22 @@ export function formatDateTime(iso: string) {
   })
 }
 
+// Short form for lists: "Nov 3, 5:00 PM", with the year only when it is not this year.
+export function formatShort(iso: string) {
+  const d = new Date(iso)
+  const year = (x: Date) =>
+    x.toLocaleString('en-PH', { timeZone: TZ, year: 'numeric' })
+  const sameYear = year(d) === year(new Date())
+  return d.toLocaleString('en-PH', {
+    timeZone: TZ,
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 export type DueStatus = 'none' | 'overdue' | 'soon' | 'ok'
 
 export function dueStatus(iso: string | null): DueStatus {

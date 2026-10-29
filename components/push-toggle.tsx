@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
 import {
   removeSubscription,
   saveSubscription,
@@ -172,7 +171,7 @@ export function PushToggle({ variant }: { variant: 'banner' | 'compact' }) {
 
   if (status === 'loading') return null
 
-  // ---------- Big banner on the home page ----------
+  // ---------- Banner on the home page ----------
   if (variant === 'banner') {
     if (hidden) return null
     if (status !== 'off' && status !== 'ios-install' && status !== 'denied') {
@@ -180,66 +179,85 @@ export function PushToggle({ variant }: { variant: 'banner' | 'compact' }) {
     }
 
     return (
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-950">
+      <div className="notice">
         {status === 'off' && (
           <>
             <div>
-              <p className="font-medium">Turn on notifications</p>
-              <p className="text-indigo-900/70">
+              <p className="notice-title">Turn on notifications</p>
+              <p className="notice-text">
                 Get alerts for new announcements and reminders.
               </p>
             </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={enable} disabled={busy}>
+            <div className="notice-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={enable}
+                disabled={busy}
+              >
                 {busy ? 'Turning on...' : 'Turn on'}
-              </Button>
-              <Button size="sm" variant="outline" onClick={dismiss}>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={dismiss}
+              >
                 Not now
-              </Button>
+              </button>
             </div>
           </>
         )}
         {status === 'ios-install' && (
           <>
-            <p>
+            <p className="notice-text">
               On iPhone, add this app to your Home Screen first (Share, then Add
               to Home Screen) to turn on notifications.
             </p>
-            <Button size="sm" variant="outline" onClick={dismiss}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={dismiss}
+            >
               Got it
-            </Button>
+            </button>
           </>
         )}
         {status === 'denied' && (
           <>
-            <p>
+            <p className="notice-text">
               Notifications are blocked. Allow them in your browser&apos;s site
               settings, then reload.
             </p>
-            <Button size="sm" variant="outline" onClick={dismiss}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={dismiss}
+            >
               Got it
-            </Button>
+            </button>
           </>
         )}
         {message && !message.ok && (
-          <p className="w-full text-red-600">{message.text}</p>
+          <p className="err" style={{ width: '100%' }} role="alert">
+            {message.text}
+          </p>
         )}
       </div>
     )
   }
 
-  // ---------- Small row inside the bell dropdown ----------
+  // ---------- Row inside the bell dropdown ----------
   return (
-    <div className="border-b px-3 py-2 text-xs">
+    <div className="pushrow">
       {status === 'on' && (
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-green-700">Notifications are on</span>
-          <span className="flex gap-3">
+        <div className="pushrow-line">
+          <span className="ok">Notifications are on</span>
+          <span style={{ display: 'flex', gap: 12 }}>
             <button
               type="button"
               onClick={sendTest}
               disabled={busy}
-              className="underline"
+              className="linklike"
             >
               Send test
             </button>
@@ -247,7 +265,7 @@ export function PushToggle({ variant }: { variant: 'banner' | 'compact' }) {
               type="button"
               onClick={disable}
               disabled={busy}
-              className="underline"
+              className="linklike"
             >
               Turn off
             </button>
@@ -255,28 +273,31 @@ export function PushToggle({ variant }: { variant: 'banner' | 'compact' }) {
         </div>
       )}
       {status === 'off' && (
-        <Button size="sm" className="w-full" onClick={enable} disabled={busy}>
+        <button
+          type="button"
+          className="btn btn-primary btn-sm btn-block"
+          onClick={enable}
+          disabled={busy}
+        >
           {busy ? 'Turning on...' : 'Turn on notifications'}
-        </Button>
+        </button>
       )}
       {status === 'denied' && (
-        <p className="text-muted-foreground">
+        <p className="hint">
           Notifications are blocked. Allow them in your browser&apos;s site
           settings.
         </p>
       )}
       {status === 'ios-install' && (
-        <p className="text-muted-foreground">
+        <p className="hint">
           On iPhone, add this app to your Home Screen first to get notifications.
         </p>
       )}
       {status === 'unsupported' && (
-        <p className="text-muted-foreground">
-          Notifications aren&apos;t supported in this browser.
-        </p>
+        <p className="hint">Notifications aren&apos;t supported in this browser.</p>
       )}
       {message && (
-        <p className={`mt-1 ${message.ok ? 'text-green-700' : 'text-red-600'}`}>
+        <p className={message.ok ? 'ok' : 'err'} style={{ marginTop: 4 }}>
           {message.text}
         </p>
       )}

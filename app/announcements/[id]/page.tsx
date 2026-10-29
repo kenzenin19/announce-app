@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { NotificationBell } from '@/components/notification-bell'
 import { notFound } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { Shell } from '@/components/app-shell'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
@@ -38,31 +39,38 @@ export default async function AnnouncementPage({
 
   const canDelete =
     role === 'admin' || (role === 'mod' && a.created_by === user.id)
+  const author = authorName(a.profiles)
 
   return (
-    <main className="mx-auto w-full max-w-2xl p-4">
-      <div className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-muted-foreground underline">
-          &larr; Back
+    <Shell>
+      <div>
+        <Link href="/" className="back">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Announcements
         </Link>
-        <NotificationBell />
+        <h1 className="title" style={{ marginTop: 8 }}>
+          {a.title}
+        </h1>
       </div>
 
-      <article className="mt-3 rounded-lg border p-5">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <h1 className="text-xl font-semibold">{a.title}</h1>
-          <DueBadge dueAt={a.due_at} />
-        </div>
-
-        <p className="mt-1 text-xs text-muted-foreground">
-          Posted {formatDateTime(a.created_at)}
-          {authorName(a.profiles) ? ` by ${authorName(a.profiles)}` : ''}
-        </p>
+      <article className="panel panel-pad">
+        <dl className="kv">
+          <dt>Due</dt>
+          <dd>
+            <span style={{ display: 'inline-flex' }}>
+              <DueBadge dueAt={a.due_at} />
+            </span>
+          </dd>
+          <dt>Posted by</dt>
+          <dd>{author ?? '—'}</dd>
+          <dt>Posted</dt>
+          <dd>{formatDateTime(a.created_at)}</dd>
+        </dl>
 
         {a.body ? (
-          <p className="mt-4 whitespace-pre-wrap text-sm">{a.body}</p>
+          <p className="prose">{a.body}</p>
         ) : (
-          <p className="mt-4 text-sm text-muted-foreground">No details.</p>
+          <p className="hint">No details.</p>
         )}
       </article>
 
@@ -73,10 +81,17 @@ export default async function AnnouncementPage({
       />
 
       {canDelete && (
-        <div className="mt-4">
-          <DeleteButton action={deleteAnnouncement.bind(null, a.id)} />
+        <div className="danger-zone">
+          <p className="hint" style={{ maxWidth: 420 }}>
+            Deleting removes this announcement and everyone&apos;s do dates for
+            it.
+          </p>
+          <DeleteButton
+            title={a.title}
+            action={deleteAnnouncement.bind(null, a.id)}
+          />
         </div>
       )}
-    </main>
+    </Shell>
   )
 }

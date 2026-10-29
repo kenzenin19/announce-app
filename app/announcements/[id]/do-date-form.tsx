@@ -2,9 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { setDoDate, clearDoDate } from '../do-date-actions'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { formatDateTime } from '@/lib/format'
 
 // Turns a saved time into the "YYYY-MM-DDTHH:mm" text a datetime-local box needs,
 // in the viewer's own timezone.
@@ -26,14 +24,14 @@ export function DoDateForm({
   dueAt: string | null
 }) {
   const [value, setValue] = useState('')
-  const [hasSaved, setHasSaved] = useState(Boolean(initialDoAt))
+  const [savedAt, setSavedAt] = useState<string | null>(initialDoAt)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, startTransition] = useTransition()
 
   // Filled in after the page loads so it uses the viewer's timezone
   useEffect(() => {
     setValue(initialDoAt ? toLocalInput(initialDoAt) : '')
-    setHasSaved(Boolean(initialDoAt))
+    setSavedAt(initialDoAt)
   }, [initialDoAt])
 
   const afterDue =
@@ -44,11 +42,12 @@ export function DoDateForm({
       setMsg({ ok: false, text: 'Pick a date and time first.' })
       return
     }
+    const iso = new Date(value).toISOString()
     startTransition(async () => {
-      const res = await setDoDate(announcementId, new Date(value).toISOString())
+      const res = await setDoDate(announcementId, iso)
       if (res.error) setMsg({ ok: false, text: res.error })
       else {
-        setHasSaved(true)
+        setSavedAt(iso)
         setMsg({ ok: true, text: 'Saved.' })
       }
     })
@@ -60,24 +59,34 @@ export function DoDateForm({
       if (res.error) setMsg({ ok: false, text: res.error })
       else {
         setValue('')
-        setHasSaved(false)
+        setSavedAt(null)
         setMsg({ ok: true, text: 'Removed.' })
       }
     })
   }
 
   return (
-    <section className="mt-4 rounded-lg border p-5">
-      <h2 className="font-medium">My do date</h2>
-      <p className="mb-3 text-sm text-muted-foreground">
-        When do you plan to do this? Only you can see it.
+    <section className="panel panel-pad" aria-labelledby="do-h">
+      <h2 id="do-h" className="panel-h">
+        My do date
+      </h2>
+      <p className="sub" style={{ marginTop: 2 }}>
+        {savedAt ? (
+          <>
+            Planned for <span className="do">{formatDateTime(savedAt)}</span>.
+            Only you can see this.
+          </>
+        ) : (
+          'When will you do this? Only you can see it, and you get a reminder.'
+        )}
       </p>
 
-      <div className="space-y-2">
-        <Label htmlFor="do-at">Date and time</Label>
-        <Input
+      <div className="field" style={{ marginTop: 16 }}>
+        <label htmlFor="do-at">Date and time</label>
+        <input
           id="do-at"
           type="datetime-local"
+          className="input"
           value={value}
           onChange={(e) => {
             setValue(e.target.value)
@@ -87,31 +96,40 @@ export function DoDateForm({
       </div>
 
       {afterDue && (
-        <p className="mt-2 text-sm text-amber-700">
-          Heads up: this is after the due date.
+        <p className="hint" style={{ marginTop: 8, color: 'var(--warn-ink)' }}>
+          This is after the due date.
         </p>
       )}
 
-      <div className="mt-3 flex items-center gap-2">
-        <Button type="button" size="sm" onClick={save} disabled={pending}>
-          {pending ? 'Saving...' : hasSaved ? 'Update' : 'Save'}
-        </Button>
-        {hasSaved && (
-          <Button
+      <div
+        style={{
+          marginTop: 16,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={save}
+          disabled={pending}
+        >
+          {pending ? 'Saving...' : savedAt ? 'Update do date' : 'Save do date'}
+        </button>
+        {savedAt && (
+          <button
             type="button"
-            size="sm"
-            variant="outline"
+            className="btn btn-secondary"
             onClick={clear}
             disabled={pending}
           >
             Remove
-          </Button>
+          </button>
         )}
         {msg && (
-          <span
-            className={`text-sm ${msg.ok ? 'text-green-700' : 'text-red-600'}`}
-            role="status"
-          >
+          <span className={msg.ok ? 'ok' : 'err'} role="status">
             {msg.text}
           </span>
         )}

@@ -3,63 +3,67 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 import { login } from './actions'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Mark } from '@/components/mark'
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined)
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Log in</CardTitle>
-          <CardDescription>Welcome back.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form action={formAction} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required autoComplete="email" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </div>
+    <main className="auth">
+      <div className="auth-in">
+        <div className="auth-brand">
+          <Mark />
+          CSB Announcements
+        </div>
 
-            {state?.error && (
-              <p className="text-sm text-red-600" role="alert">
-                {state.error}
-              </p>
-            )}
+        <div>
+          <h1>Log in</h1>
+          <p className="sub">Announcements, due dates and your own plan.</p>
+        </div>
 
-            <Button type="submit" className="w-full" disabled={pending}>
-              {pending ? 'Logging in...' : 'Log in'}
-            </Button>
-          </form>
+        <form action={formAction} className="form">
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="input"
+              required
+              autoComplete="email"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              className="input"
+              required
+              autoComplete="current-password"
+            />
+          </div>
 
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            No account?{' '}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </p>
-        </CardContent>
-      </Card>
+          {state?.error && (
+            <p className="err" role="alert">
+              {state.error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-block"
+            disabled={pending}
+          >
+            {pending ? 'Logging in...' : 'Log in'}
+          </button>
+        </form>
+
+        <p className="auth-alt">
+          No account? <Link href="/signup">Sign up</Link>
+        </p>
+      </div>
     </main>
   )
 }
