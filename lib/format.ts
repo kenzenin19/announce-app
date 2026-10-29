@@ -19,8 +19,12 @@ export function dueStatus(iso: string | null): DueStatus {
   return 'ok'
 }
 
-// The joined profile can come back as an object or an array
+// A joined row can come back as an object or as a one-item array
+export function firstRow<T>(value: unknown): T | null {
+  const row = Array.isArray(value) ? value[0] : value
+  return (row ?? null) as T | null
+}
+
 export function authorName(profile: unknown): string | null {
-  const row = Array.isArray(profile) ? profile[0] : profile
-  return (row as { name?: string } | null | undefined)?.name ?? null
+  return firstRow<{ name?: string }>(profile)?.name ?? null
 }

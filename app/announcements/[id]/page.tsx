@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
 import { deleteAnnouncement } from '../actions'
 import { DeleteButton } from './delete-button'
+import { DoDateForm } from './do-date-form'
 
 export default async function AnnouncementPage({
   params,
@@ -16,11 +17,19 @@ export default async function AnnouncementPage({
 
   const { data: a } = await supabase
     .from('announcements')
-    .select('id, title, body, due_at, created_at, created_by, profiles(name)')
+    .select('id, title, body, due_at, created_at, created_by, profiles!announcements_created_by_fkey(name)')
     .eq('id', id)
     .maybeSingle()
 
   if (!a) notFound()
+
+  // This user's own do date for this announcement (if any)
+  const { data: mine } = await supabase
+    .from('do_dates')
+    .select('do_at')
+    .eq('announcement_id', a.id)
+    .eq('user_id', user.id)
+    .maybeSingle()
 
   const canDelete =
     role === 'admin' || (role === 'mod' && a.created_by === user.id)
@@ -48,6 +57,12 @@ export default async function AnnouncementPage({
           <p className="mt-4 text-sm text-muted-foreground">No details.</p>
         )}
       </article>
+
+      <DoDateForm
+        announcementId={a.id}
+        initialDoAt={mine?.do_at ?? null}
+        dueAt={a.due_at}
+      />
 
       {canDelete && (
         <div className="mt-4">
