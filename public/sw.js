@@ -1,7 +1,8 @@
-// Service worker (Day 5)
-// Keeps the app installable and shows a friendly page when offline.
+// Service worker (Days 5 and 6)
+// - keeps the app installable and shows a friendly page when offline
+// - shows push notifications and opens the right page when tapped
 // It does NOT cache your pages or data, so people never see stale or other
-// people's content. Push notifications get added to this file on Day 6.
+// people's content.
 
 const OFFLINE_HTML = `<!doctype html>
 <html lang="en">
@@ -47,5 +48,54 @@ self.addEventListener('fetch', (event) => {
           headers: { 'Content-Type': 'text/html; charset=utf-8' },
         })
     )
+  )
+})
+
+// ---- Push notifications (Day 6) ----
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch (e) {
+    data = { body: event.data ? event.data.text() : '' }
+  }
+
+  const title = data.title || 'CSB Announcements'
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/icons/icon-192.png',
+      tag: data.tag || undefined,
+      data: { url: data.url || '/' },
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = new URL(
+    (event.notification.data && event.notification.data.url) || '/',
+    self.location.origin
+  ).href
+
+  event.waitUntil(
+    (async () => {
+      const list = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      for (const client of list) {
+        if ('focus' in client) {
+          try {
+            await client.navigate(target)
+          } catch (e) {
+            // some browsers cannot navigate an open window: just focus it
+          }
+          return client.focus()
+        }
+      }
+      return self.clients.openWindow(target)
+    })()
   )
 })

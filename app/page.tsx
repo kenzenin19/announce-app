@@ -6,6 +6,7 @@ import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser, canPost } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
 import { PostedBanner } from '@/components/posted-banner'
+import { PushToggle } from '@/components/push-toggle'
 
 export default async function Home({
   searchParams,
@@ -52,6 +53,8 @@ export default async function Home({
       </header>
 
       {posted && <PostedBanner />}
+
+      <PushToggle variant="banner" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {canPost(role) && (

@@ -30,6 +30,7 @@ export async function setDoDate(
       announcement_id: announcementId,
       user_id: user.id,
       do_at: d.toISOString(),
+      reminded: false,
     },
     { onConflict: 'announcement_id,user_id' }
   )
