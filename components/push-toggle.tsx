@@ -10,7 +10,9 @@ import {
 
 type Status = 'loading' | 'unsupported' | 'ios-install' | 'denied' | 'off' | 'on'
 
-const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ''
+const VAPID_PUBLIC = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '')
+  .replace(/[\s"']/g, '')
+  .replace(/=+$/, '')
 const DISMISS_KEY = 'push-banner-dismissed-at'
 const DISMISS_DAYS = 3
 

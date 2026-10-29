@@ -13,9 +13,13 @@ let configured = false
 function configure() {
   if (configured) return true
 
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-  const priv = process.env.VAPID_PRIVATE_KEY
-  const subject = process.env.VAPID_SUBJECT
+  // Copy-paste often adds a space, line break, quotes or "=" at the end.
+  // The push library rejects those, so clean them here.
+  const clean = (v?: string) => (v ?? '').replace(/[\s"']/g, '').replace(/=+$/, '')
+
+  const pub = clean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
+  const priv = clean(process.env.VAPID_PRIVATE_KEY)
+  const subject = (process.env.VAPID_SUBJECT ?? '').trim().replace(/^["']|["']$/g, '')
   if (!pub || !priv || !subject) return false
 
   webpush.setVapidDetails(subject, pub, priv)
