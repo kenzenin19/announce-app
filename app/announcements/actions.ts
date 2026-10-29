@@ -32,11 +32,9 @@ export async function createAnnouncement(
   }
 
   // RLS also blocks members from inserting, so this is safe even if the UI is bypassed
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('announcements')
     .insert({ title, body, due_at, created_by: user.id })
-    .select('id')
-    .single()
 
   if (error) {
     return {
@@ -47,7 +45,7 @@ export async function createAnnouncement(
   }
 
   revalidatePath('/')
-  redirect(`/announcements/${data.id}`)
+  redirect('/?posted=1')
 }
 
 export async function deleteAnnouncement(id: string) {

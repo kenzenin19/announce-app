@@ -1,11 +1,18 @@
 import Link from 'next/link'
+import { NotificationBell } from '@/components/notification-bell'
 import { logout } from './login/actions'
 import { Button } from '@/components/ui/button'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser, canPost } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
+import { PostedBanner } from '@/components/posted-banner'
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ posted?: string }>
+}) {
+  const { posted } = await searchParams
   const { supabase, user, name, role } = await getCurrentUser()
 
   // Soonest due date first; announcements with no due date go last
@@ -34,12 +41,17 @@ export default async function Home() {
             Hi, {name} · {role}
           </p>
         </div>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Log out
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <form action={logout}>
+            <Button type="submit" variant="outline" size="sm">
+              Log out
+            </Button>
+          </form>
+        </div>
       </header>
+
+      {posted && <PostedBanner />}
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {canPost(role) && (

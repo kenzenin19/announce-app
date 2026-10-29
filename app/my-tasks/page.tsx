@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NotificationBell } from '@/components/notification-bell'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { firstRow, formatDateTime } from '@/lib/format'
@@ -37,9 +38,12 @@ export default async function MyTasksPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl p-4">
-      <Link href="/" className="text-sm text-muted-foreground underline">
-        &larr; Back
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-sm text-muted-foreground underline">
+          &larr; Back
+        </Link>
+        <NotificationBell />
+      </div>
       <h1 className="mt-3 mb-4 text-xl font-semibold">My tasks</h1>
 
       {error && (

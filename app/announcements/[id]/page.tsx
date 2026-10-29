@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NotificationBell } from '@/components/notification-bell'
 import { notFound } from 'next/navigation'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
@@ -36,9 +37,12 @@ export default async function AnnouncementPage({
 
   return (
     <main className="mx-auto w-full max-w-2xl p-4">
-      <Link href="/" className="text-sm text-muted-foreground underline">
-        &larr; Back
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="text-sm text-muted-foreground underline">
+          &larr; Back
+        </Link>
+        <NotificationBell />
+      </div>
 
       <article className="mt-3 rounded-lg border p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
