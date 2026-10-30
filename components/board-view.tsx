@@ -119,40 +119,40 @@ export function BoardView({
 
   return (
     <>
-      <div className="titlerow">
-        <div style={{ minWidth: 0 }}>
+      <div>
+        <div className="titlerow">
           <h1 className="title">Due dates</h1>
-          {finding && <p className="sub">{finding}</p>}
-        </div>
-        <div className="titlerow-actions">
-          <div className="seg" role="group" aria-label="View">
-            <button
-              type="button"
-              aria-pressed={view === 'list'}
-              onClick={() => pickView('list')}
-            >
-              <List size={16} aria-hidden="true" />
-              List
-            </button>
-            <button
-              type="button"
-              aria-pressed={view === 'calendar'}
-              onClick={() => pickView('calendar')}
-            >
-              <CalendarDays size={16} aria-hidden="true" />
-              Calendar
-            </button>
+          <div className="titlerow-actions">
+            <div className="seg" role="group" aria-label="View">
+              <button
+                type="button"
+                aria-pressed={view === 'list'}
+                onClick={() => pickView('list')}
+              >
+                <List size={16} aria-hidden="true" />
+                List
+              </button>
+              <button
+                type="button"
+                aria-pressed={view === 'calendar'}
+                onClick={() => pickView('calendar')}
+              >
+                <CalendarDays size={16} aria-hidden="true" />
+                Calendar
+              </button>
+            </div>
+            {canPost && (
+              <Link
+                href="/announcements/new"
+                className="btn btn-primary hide-phone"
+              >
+                <Plus size={16} strokeWidth={2} aria-hidden="true" />
+                New announcement
+              </Link>
+            )}
           </div>
-          {canPost && (
-            <Link
-              href="/announcements/new"
-              className="btn btn-primary hide-phone"
-            >
-              <Plus size={16} strokeWidth={2} aria-hidden="true" />
-              New announcement
-            </Link>
-          )}
         </div>
+        {finding && <p className="sub sub-line">{finding}</p>}
       </div>
 
       {notices}

@@ -11,11 +11,13 @@ export function DoneToggle({
   initialDone,
   title,
   variant,
+  note,
 }: {
   announcementId: string
   initialDone: boolean
   title: string
   variant: 'row' | 'detail'
+  note?: string
 }) {
   const [done, setLocal] = useState(initialDone)
   const [err, setErr] = useState<string | null>(null)
@@ -80,6 +82,7 @@ export function DoneToggle({
           {!done && <Check size={14} strokeWidth={2.25} aria-hidden="true" />}
           {done ? 'Undo' : 'Done'}
         </button>
+        {note && !done && <span className="donenote phone-only">{note}</span>}
       </div>
     )
   }

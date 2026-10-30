@@ -1452,3 +1452,33 @@ button.cal-cell:hover {
     height: 36px;
   }
 }
+
+/* ---------- Tweaks: one-line summary, note beside the Done button ---------- */
+
+.sub-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.titlerow {
+  align-items: center;
+}
+.donenote {
+  display: none;
+  color: var(--negative-ink);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+@media (max-width: 639px) {
+  .donecol {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 44px;
+  }
+  .donecol .donenote.phone-only {
+    display: block;
+    min-width: 0;
+  }
+}

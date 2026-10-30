@@ -41,7 +41,9 @@ export function BoardRow({ a }: { a: BoardItem }) {
           <p className="row-meta">
             {a.author ? `Posted by ${a.author}` : 'Posted'}
           </p>
-          {overdue && <p className="overdue-note">Mark done if already done.</p>}
+          {overdue && (
+            <p className="overdue-note desk-only">Mark done if already done.</p>
+          )}
         </div>
         {/* Desktop: pill and date on the right */}
         {!done && (
@@ -56,6 +58,7 @@ export function BoardRow({ a }: { a: BoardItem }) {
         initialDone={done}
         title={a.title}
         variant="row"
+        note={overdue ? 'Mark done if already done.' : undefined}
       />
       {/* Decoration only: tapping the row still opens the announcement */}
       <span className="row-expand" aria-hidden="true">
