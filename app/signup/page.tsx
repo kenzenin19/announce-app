@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useActionState } from 'react'
 import { signup } from '../login/actions'
+import { AuthLoading } from '@/components/auth-loading'
 import { Mark } from '@/components/mark'
 
 export default function SignupPage() {
@@ -10,6 +11,7 @@ export default function SignupPage() {
 
   return (
     <main className="auth">
+      {pending && <AuthLoading text="Setting up your board…" />}
       <div className="auth-in">
         <div className="auth-brand">
           <Mark />

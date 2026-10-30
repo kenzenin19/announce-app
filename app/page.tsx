@@ -1,82 +1,10 @@
-import Link from 'next/link'
-import { Plus } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
-import { AnnTags } from '@/components/ann-tags'
-import { DoneToggle } from '@/components/done-toggle'
-import { DueBadge } from '@/components/due-badge'
+import { BoardView } from '@/components/board-view'
+import type { BoardItem } from '@/components/board-types'
 import { PostedBanner } from '@/components/posted-banner'
 import { PushToggle } from '@/components/push-toggle'
 import { getCurrentUser, canPost } from '@/lib/auth'
-import { authorName, dueStatus, formatShort } from '@/lib/format'
-
-type Row = {
-  id: string
-  title: string
-  body: string
-  due_at: string | null
-  created_at: string
-  subject: string | null
-  kind: string | null
-  profiles: unknown
-}
-
-function AnnRow({
-  a,
-  done,
-  myDoAt,
-}: {
-  a: Row
-  done: boolean
-  myDoAt?: string
-}) {
-  const author = authorName(a.profiles)
-  const st = dueStatus(a.due_at)
-  const hasPill = !done && (st === 'overdue' || st === 'soon')
-  return (
-    <li className={`rowwrap ${done ? 'row-done' : ''}`}>
-      <Link href={`/announcements/${a.id}`} className="row">
-        {/* Phones: the pill sits in the top-right corner */}
-        {!done && (
-          <span className="row-pill phone-only">
-            <DueBadge dueAt={a.due_at} variant="pill" />
-          </span>
-        )}
-        <div style={{ minWidth: 0 }} className={hasPill ? 'has-pill' : undefined}>
-          <AnnTags subject={a.subject} kind={a.kind} />
-          {/* Phones: the due date sits under the subject and type */}
-          {!done && (
-            <p className="row-due phone-only">
-              <DueBadge dueAt={a.due_at} variant="text" />
-              {myDoAt ? (
-                <span className="do">Do {formatShort(myDoAt)}</span>
-              ) : null}
-            </p>
-          )}
-          <h2 className="row-title">{a.title}</h2>
-          {a.body && <p className="row-body">{a.body}</p>}
-          <p className="row-meta">
-            {author ? `Posted by ${author}` : 'Posted'}
-          </p>
-        </div>
-        {/* Desktop: pill and date on the right */}
-        {!done && (
-          <div className="row-side desk-only">
-            <DueBadge dueAt={a.due_at} />
-            {myDoAt ? (
-              <span className="do">Do {formatShort(myDoAt)}</span>
-            ) : null}
-          </div>
-        )}
-      </Link>
-      <DoneToggle
-        announcementId={a.id}
-        initialDone={done}
-        title={a.title}
-        variant="row"
-      />
-    </li>
-  )
-}
+import { authorName, dueStatus } from '@/lib/format'
 
 export default async function Home({
   searchParams,
@@ -116,16 +44,25 @@ export default async function Home({
     (myDone ?? []).map((d) => d.announcement_id as string)
   )
 
-  // Open ones first (same order as before), done ones go to the bottom group
-  const all = (announcements ?? []) as Row[]
-  const open = all.filter((a) => !doneSet.has(a.id))
-  const doneList = all.filter((a) => doneSet.has(a.id))
+  const items: BoardItem[] = (announcements ?? []).map((a) => ({
+    id: a.id as string,
+    title: a.title as string,
+    body: (a.body as string) ?? '',
+    due_at: a.due_at as string | null,
+    created_at: a.created_at as string,
+    subject: a.subject as string | null,
+    kind: a.kind as string | null,
+    author: authorName(a.profiles),
+    doAt: doMap.get(a.id as string) ?? null,
+    done: doneSet.has(a.id as string),
+  }))
 
   // The one finding: what still needs attention (done items do not count)
-  const soon = open.filter((a) => dueStatus(a.due_at) === 'soon').length
-  const unplanned = open.filter((a) => {
-    const s = dueStatus(a.due_at)
-    return (s === 'soon' || s === 'ok') && !doMap.has(a.id)
+  const open = items.filter((i) => !i.done)
+  const soon = open.filter((i) => dueStatus(i.due_at) === 'soon').length
+  const unplanned = open.filter((i) => {
+    const s = dueStatus(i.due_at)
+    return (s === 'soon' || s === 'ok') && !i.doAt
   }).length
 
   const parts: string[] = []
@@ -133,7 +70,7 @@ export default async function Home({
   if (unplanned) parts.push(`${unplanned} without a do date`)
   const finding = error
     ? ''
-    : all.length === 0
+    : items.length === 0
       ? 'Nothing posted yet.'
       : open.length === 0
         ? 'All done.'
@@ -143,63 +80,22 @@ export default async function Home({
 
   return (
     <Shell>
-      <div className="titlerow">
-        <div>
-          <h1 className="title">Announcements</h1>
-          {finding && <p className="sub">{finding}</p>}
-        </div>
-        {canPost(role) && (
-          <Link
-            href="/announcements/new"
-            className="btn btn-primary hide-phone"
-          >
-            <Plus size={16} strokeWidth={2} aria-hidden="true" />
-            New announcement
-          </Link>
-        )}
-      </div>
-
-      {posted && <PostedBanner />}
-
-      <PushToggle variant="banner" />
-
-      {error && (
-        <p className="notice notice-err" role="alert">
-          Couldn&apos;t load announcements: {error.message}
-        </p>
-      )}
-
-      {!error && all.length === 0 && (
-        <p className="empty">
-          No announcements yet.
-          {canPost(role) ? ' Post the first one with New announcement.' : ''}
-        </p>
-      )}
-
-      {!error && all.length > 0 && open.length === 0 && (
-        <p className="empty">Nothing open. Everything is marked done.</p>
-      )}
-
-      {open.length > 0 && (
-        <ul className="panel rows">
-          {open.map((a) => (
-            <AnnRow key={a.id} a={a} done={false} myDoAt={doMap.get(a.id)} />
-          ))}
-        </ul>
-      )}
-
-      {doneList.length > 0 && (
-        <details className="donegroup">
-          <summary>
-            Done <span>{doneList.length}</span>
-          </summary>
-          <ul className="panel rows">
-            {doneList.map((a) => (
-              <AnnRow key={a.id} a={a} done />
-            ))}
-          </ul>
-        </details>
-      )}
+      <BoardView
+        items={items}
+        finding={finding}
+        canPost={canPost(role)}
+        notices={
+          <>
+            {posted && <PostedBanner />}
+            <PushToggle variant="banner" />
+            {error && (
+              <p className="notice notice-err" role="alert">
+                Couldn&apos;t load announcements: {error.message}
+              </p>
+            )}
+          </>
+        }
+      />
     </Shell>
   )
 }
