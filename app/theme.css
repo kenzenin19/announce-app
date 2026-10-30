@@ -1482,3 +1482,57 @@ button.cal-cell:hover {
     min-width: 0;
   }
 }
+
+/* ---------- Expand: the corner icon opens the full details ---------- */
+
+.row-expand {
+  right: 8px;
+  bottom: 6px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 120ms, color 120ms;
+}
+.row-expand:hover {
+  background: var(--active);
+  color: var(--text);
+}
+.expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+.expand[data-open='true'] {
+  grid-template-rows: 1fr;
+}
+.expand-clip {
+  overflow: hidden;
+  min-height: 0;
+}
+.expand-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 20px 16px;
+}
+.expand-text {
+  font-size: 15px;
+  line-height: 24px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.expand-meta {
+  color: var(--faint);
+  font-size: 13px;
+  line-height: 18px;
+}
+.row-open .row-body {
+  display: none;
+}
