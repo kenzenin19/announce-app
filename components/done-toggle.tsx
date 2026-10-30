@@ -48,10 +48,11 @@ export function DoneToggle({
           aria-label={
             done ? `Mark "${title}" as not done` : `Mark "${title}" as done`
           }
-          title={err ?? (done ? 'Done. Tap to undo' : 'Mark as done')}
-          className={`donebtn ${done ? 'donebtn-on' : ''}`}
+          title={err ?? undefined}
+          className={`btn btn-secondary btn-sm ${done ? '' : 'btn-markdone'}`}
         >
-          <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+          {!done && <Check size={14} strokeWidth={2.25} aria-hidden="true" />}
+          {done ? 'Undo' : 'Done'}
         </button>
       </div>
     )

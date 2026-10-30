@@ -32,12 +32,6 @@ function AnnRow({
   const author = authorName(a.profiles)
   return (
     <li className={`rowwrap ${done ? 'row-done' : ''}`}>
-      <DoneToggle
-        announcementId={a.id}
-        initialDone={done}
-        title={a.title}
-        variant="row"
-      />
       <Link href={`/announcements/${a.id}`} className="row">
         <div style={{ minWidth: 0 }}>
           <AnnTags subject={a.subject} kind={a.kind} />
@@ -45,21 +39,21 @@ function AnnRow({
           {a.body && <p className="row-body">{a.body}</p>}
           <p className="row-meta">
             {author ? `Posted by ${author}` : 'Posted'}
-            {' · '}
-            {formatShort(a.created_at)}
           </p>
         </div>
         <div className="row-side">
-          {done ? (
-            <span className="due">Done</span>
-          ) : (
-            <DueBadge dueAt={a.due_at} />
-          )}
+          {!done && <DueBadge dueAt={a.due_at} />}
           {!done && myDoAt ? (
             <span className="do">Do {formatShort(myDoAt)}</span>
           ) : null}
         </div>
       </Link>
+      <DoneToggle
+        announcementId={a.id}
+        initialDone={done}
+        title={a.title}
+        variant="row"
+      />
     </li>
   )
 }
