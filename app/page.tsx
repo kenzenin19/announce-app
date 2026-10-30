@@ -1,12 +1,68 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
-import { DueBadge } from '@/components/due-badge'
 import { AnnTags } from '@/components/ann-tags'
+import { DoneToggle } from '@/components/done-toggle'
+import { DueBadge } from '@/components/due-badge'
 import { PostedBanner } from '@/components/posted-banner'
 import { PushToggle } from '@/components/push-toggle'
 import { getCurrentUser, canPost } from '@/lib/auth'
 import { authorName, dueStatus, formatShort } from '@/lib/format'
+
+type Row = {
+  id: string
+  title: string
+  body: string
+  due_at: string | null
+  created_at: string
+  subject: string | null
+  kind: string | null
+  profiles: unknown
+}
+
+function AnnRow({
+  a,
+  done,
+  myDoAt,
+}: {
+  a: Row
+  done: boolean
+  myDoAt?: string
+}) {
+  const author = authorName(a.profiles)
+  return (
+    <li className={`rowwrap ${done ? 'row-done' : ''}`}>
+      <DoneToggle
+        announcementId={a.id}
+        initialDone={done}
+        title={a.title}
+        variant="row"
+      />
+      <Link href={`/announcements/${a.id}`} className="row">
+        <div style={{ minWidth: 0 }}>
+          <AnnTags subject={a.subject} kind={a.kind} />
+          <h2 className="row-title">{a.title}</h2>
+          {a.body && <p className="row-body">{a.body}</p>}
+          <p className="row-meta">
+            {author ? `Posted by ${author}` : 'Posted'}
+            {' · '}
+            {formatShort(a.created_at)}
+          </p>
+        </div>
+        <div className="row-side">
+          {done ? (
+            <span className="due">Done</span>
+          ) : (
+            <DueBadge dueAt={a.due_at} />
+          )}
+          {!done && myDoAt ? (
+            <span className="do">Do {formatShort(myDoAt)}</span>
+          ) : null}
+        </div>
+      </Link>
+    </li>
+  )
+}
 
 export default async function Home({
   searchParams,
@@ -16,8 +72,8 @@ export default async function Home({
   const { posted } = await searchParams
   const { supabase, user, role } = await getCurrentUser()
 
-  // Ask the database both questions at the same time (faster than one after the other)
-  const [{ data: announcements, error }, { data: myDoDates }] =
+  // Ask the database all three questions at the same time
+  const [{ data: announcements, error }, { data: myDoDates }, { data: myDone }] =
     await Promise.all([
       // Soonest due date first; announcements with no due date go last
       supabase
@@ -32,16 +88,28 @@ export default async function Home({
         .from('do_dates')
         .select('announcement_id, do_at')
         .eq('user_id', user.id),
+      // What this user has marked done (private to them)
+      supabase
+        .from('completions')
+        .select('announcement_id')
+        .eq('user_id', user.id),
     ])
 
   const doMap = new Map<string, string>(
     (myDoDates ?? []).map((d) => [d.announcement_id as string, d.do_at as string])
   )
+  const doneSet = new Set<string>(
+    (myDone ?? []).map((d) => d.announcement_id as string)
+  )
 
-  // The one finding: what needs attention now
-  const list = announcements ?? []
-  const soon = list.filter((a) => dueStatus(a.due_at) === 'soon').length
-  const unplanned = list.filter((a) => {
+  // Open ones first (same order as before), done ones go to the bottom group
+  const all = (announcements ?? []) as Row[]
+  const open = all.filter((a) => !doneSet.has(a.id))
+  const doneList = all.filter((a) => doneSet.has(a.id))
+
+  // The one finding: what still needs attention (done items do not count)
+  const soon = open.filter((a) => dueStatus(a.due_at) === 'soon').length
+  const unplanned = open.filter((a) => {
     const s = dueStatus(a.due_at)
     return (s === 'soon' || s === 'ok') && !doMap.has(a.id)
   }).length
@@ -51,11 +119,13 @@ export default async function Home({
   if (unplanned) parts.push(`${unplanned} without a do date`)
   const finding = error
     ? ''
-    : list.length === 0
+    : all.length === 0
       ? 'Nothing posted yet.'
-      : parts.length
-        ? parts.join(' · ')
-        : 'Nothing due soon.'
+      : open.length === 0
+        ? 'All done.'
+        : parts.length
+          ? parts.join(' · ')
+          : 'Nothing due soon.'
 
   return (
     <Shell>
@@ -85,42 +155,36 @@ export default async function Home({
         </p>
       )}
 
-      {!error && list.length === 0 && (
+      {!error && all.length === 0 && (
         <p className="empty">
           No announcements yet.
           {canPost(role) ? ' Post the first one with New announcement.' : ''}
         </p>
       )}
 
-      {list.length > 0 && (
+      {!error && all.length > 0 && open.length === 0 && (
+        <p className="empty">Nothing open. Everything is marked done.</p>
+      )}
+
+      {open.length > 0 && (
         <ul className="panel rows">
-          {list.map((a) => {
-            const myDoAt = doMap.get(a.id)
-            const author = authorName(a.profiles)
-            return (
-              <li key={a.id}>
-                <Link href={`/announcements/${a.id}`} className="row">
-                  <div style={{ minWidth: 0 }}>
-                    <AnnTags subject={a.subject} kind={a.kind} />
-                    <h2 className="row-title">{a.title}</h2>
-                    {a.body && <p className="row-body">{a.body}</p>}
-                    <p className="row-meta">
-                      {author ? `Posted by ${author}` : 'Posted'}
-                      {' · '}
-                      {formatShort(a.created_at)}
-                    </p>
-                  </div>
-                  <div className="row-side">
-                    <DueBadge dueAt={a.due_at} />
-                    {myDoAt ? (
-                      <span className="do">Do {formatShort(myDoAt)}</span>
-                    ) : null}
-                  </div>
-                </Link>
-              </li>
-            )
-          })}
+          {open.map((a) => (
+            <AnnRow key={a.id} a={a} done={false} myDoAt={doMap.get(a.id)} />
+          ))}
         </ul>
+      )}
+
+      {doneList.length > 0 && (
+        <details className="donegroup">
+          <summary>
+            Done <span>{doneList.length}</span>
+          </summary>
+          <ul className="panel rows">
+            {doneList.map((a) => (
+              <AnnRow key={a.id} a={a} done />
+            ))}
+          </ul>
+        </details>
       )}
     </Shell>
   )

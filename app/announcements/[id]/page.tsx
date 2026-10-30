@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
 import { AnnTags } from '@/components/ann-tags'
+import { DoneToggle } from '@/components/done-toggle'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
@@ -19,7 +20,7 @@ export default async function AnnouncementPage({
   const { supabase, user, role } = await getCurrentUser()
 
   // Both lookups at the same time
-  const [{ data: a }, { data: mine }] = await Promise.all([
+  const [{ data: a }, { data: mine }, { data: doneRow }] = await Promise.all([
     supabase
       .from('announcements')
       .select(
@@ -31,6 +32,13 @@ export default async function AnnouncementPage({
     supabase
       .from('do_dates')
       .select('do_at')
+      .eq('announcement_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    // Has this user marked it done?
+    supabase
+      .from('completions')
+      .select('announcement_id')
       .eq('announcement_id', id)
       .eq('user_id', user.id)
       .maybeSingle(),
@@ -49,10 +57,18 @@ export default async function AnnouncementPage({
           <ArrowLeft size={16} aria-hidden="true" />
           Announcements
         </Link>
-        <div style={{ marginTop: 8 }}>
-          <AnnTags subject={a.subject} kind={a.kind} />
+        <div className="titlerow" style={{ marginTop: 8 }}>
+          <div style={{ minWidth: 0 }}>
+            <AnnTags subject={a.subject} kind={a.kind} />
+            <h1 className="title">{a.title}</h1>
+          </div>
+          <DoneToggle
+            announcementId={a.id}
+            initialDone={Boolean(doneRow)}
+            title={a.title}
+            variant="detail"
+          />
         </div>
-        <h1 className="title">{a.title}</h1>
       </div>
 
       <article className="panel panel-pad">

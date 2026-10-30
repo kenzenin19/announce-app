@@ -11,7 +11,7 @@ export default async function MyTasksPage() {
   const { supabase, user } = await getCurrentUser()
 
   // Both lookups at the same time
-  const [{ data: rows, error }, { data: dueSoon }] = await Promise.all([
+  const [{ data: rows, error }, { data: dueSoon }, { data: myDone }] = await Promise.all([
     supabase
       .from('do_dates')
       .select('do_at, announcements(id, title, due_at)')
@@ -23,6 +23,11 @@ export default async function MyTasksPage() {
       .select('id, title, due_at')
       .gte('due_at', new Date().toISOString())
       .order('due_at', { ascending: true }),
+    // What this user has marked done
+    supabase
+      .from('completions')
+      .select('announcement_id')
+      .eq('user_id', user.id),
   ])
 
   const items: Item[] = []
@@ -37,16 +42,32 @@ export default async function MyTasksPage() {
       })
   }
 
+  const doneSet = new Set<string>(
+    (myDone ?? []).map((d) => d.announcement_id as string)
+  )
+
   const now = Date.now()
-  const upcoming = items.filter((i) => new Date(i.do_at).getTime() >= now)
-  const passed = items.filter((i) => new Date(i.do_at).getTime() < now)
+  const openItems = items.filter((i) => !doneSet.has(i.id))
+  const upcoming = openItems.filter((i) => new Date(i.do_at).getTime() >= now)
+  const passed = openItems.filter((i) => new Date(i.do_at).getTime() < now)
   const plannedIds = new Set(items.map((i) => i.id))
-  const unplanned = (dueSoon ?? []).filter((a) => !plannedIds.has(a.id))
+  const unplanned = (dueSoon ?? []).filter(
+    (a) => !plannedIds.has(a.id) && !doneSet.has(a.id)
+  )
+
+  // Done ones: planned items you finished, plus announcements you finished without a do date
+  const doneItems: Item[] = [
+    ...items.filter((i) => doneSet.has(i.id)),
+    ...(dueSoon ?? [])
+      .filter((a) => !plannedIds.has(a.id) && doneSet.has(a.id))
+      .map((a) => ({ id: a.id, title: a.title, due_at: a.due_at, do_at: '' })),
+  ]
 
   const sub = [
     `${upcoming.length} planned`,
     passed.length ? `${passed.length} do date passed` : '',
     unplanned.length ? `${unplanned.length} not planned yet` : '',
+    doneItems.length ? `${doneItems.length} done` : '',
   ]
     .filter(Boolean)
     .join(' · ')
@@ -114,6 +135,18 @@ export default async function MyTasksPage() {
           </ul>
         </section>
       )}
+      {doneItems.length > 0 && (
+        <details className="donegroup">
+          <summary>
+            Done <span>{doneItems.length}</span>
+          </summary>
+          <ul className="panel rows row-done">
+            {doneItems.map((i) => (
+              <TaskRow key={i.id} item={i} />
+            ))}
+          </ul>
+        </details>
+      )}
     </Shell>
   )
 }
@@ -124,9 +157,11 @@ function TaskRow({ item }: { item: Item }) {
       <Link href={`/announcements/${item.id}`} className="row">
         <div style={{ minWidth: 0 }}>
           <span className="row-title">{item.title}</span>
-          <p className="do" style={{ marginTop: 4 }}>
-            Do {formatShort(item.do_at)}
-          </p>
+          {item.do_at && (
+            <p className="do" style={{ marginTop: 4 }}>
+              Do {formatShort(item.do_at)}
+            </p>
+          )}
         </div>
         <div className="row-side">
           <DueBadge dueAt={item.due_at} />

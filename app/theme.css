@@ -501,6 +501,112 @@ h1.title {
   font-weight: 500;
 }
 
+/* ---------- Done ---------- */
+
+.rowwrap {
+  display: flex;
+  align-items: stretch;
+}
+.rowwrap > .row {
+  flex: 1;
+  min-width: 0;
+  padding-left: 4px;
+}
+.donecol {
+  flex: none;
+  width: 52px;
+  padding: 16px 0 0 16px;
+}
+.donebtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1.5px solid var(--control);
+  background: var(--surface);
+  color: transparent;
+  cursor: pointer;
+  transition: background-color 120ms, border-color 120ms, color 120ms;
+}
+.donebtn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.donebtn-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.donebtn-on:hover:not(:disabled) {
+  color: #fff;
+}
+@media (max-width: 639px) {
+  /* a bigger touch target on phones */
+  .donebtn {
+    width: 32px;
+    height: 32px;
+  }
+  .donecol {
+    width: 56px;
+  }
+}
+.btn-done {
+  background: var(--accent-tint);
+  border-color: transparent;
+  color: var(--accent);
+}
+.btn-done:hover:not(:disabled) {
+  background: #d3ebe7;
+  border-color: transparent;
+}
+.row-done .row-title {
+  color: var(--muted);
+}
+.row-done .pill {
+  display: none;
+}
+.row-done .row-body {
+  display: none;
+}
+.donegroup {
+  margin-top: 8px;
+}
+.donegroup > summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 4px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+.donegroup > summary::-webkit-details-marker {
+  display: none;
+}
+.donegroup > summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  transition: transform 120ms;
+}
+.donegroup[open] > summary::before {
+  transform: rotate(45deg);
+}
+.donegroup > summary span {
+  color: var(--faint);
+  font-weight: 400;
+}
+.donegroup .panel {
+  margin-top: 8px;
+}
+
 /* ---------- Panels, rows ---------- */
 
 .panel {
