@@ -9,4 +9,5 @@ export type BoardItem = {
   author: string | null
   doAt: string | null
   done: boolean
+  isNew: boolean
 }

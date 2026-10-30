@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
 import { AnnTags } from '@/components/ann-tags'
 import { DoneToggle } from '@/components/done-toggle'
+import { SeenMarker } from '@/components/seen-marker'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
@@ -52,6 +53,7 @@ export default async function AnnouncementPage({
 
   return (
     <Shell>
+      <SeenMarker announcementId={a.id} />
       <div>
         <Link href="/" className="back">
           <ArrowLeft size={16} aria-hidden="true" />

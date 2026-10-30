@@ -15,7 +15,12 @@ export default async function Home({
   const { supabase, user, role } = await getCurrentUser()
 
   // Ask the database all three questions at the same time
-  const [{ data: announcements, error }, { data: myDoDates }, { data: myDone }] =
+  const [
+    { data: announcements, error },
+    { data: myDoDates },
+    { data: myDone },
+    { data: mySeen },
+  ] =
     await Promise.all([
       // Soonest due date first; announcements with no due date go last
       supabase
@@ -35,6 +40,11 @@ export default async function Home({
         .from('completions')
         .select('announcement_id')
         .eq('user_id', user.id),
+      // What this user has already opened (private to them)
+      supabase
+        .from('seen_announcements')
+        .select('announcement_id')
+        .eq('user_id', user.id),
     ])
 
   const doMap = new Map<string, string>(
@@ -42,6 +52,10 @@ export default async function Home({
   )
   const doneSet = new Set<string>(
     (myDone ?? []).map((d) => d.announcement_id as string)
+  )
+
+  const seenSet = new Set<string>(
+    (mySeen ?? []).map((d) => d.announcement_id as string)
   )
 
   const items: BoardItem[] = (announcements ?? []).map((a) => ({
@@ -55,19 +69,21 @@ export default async function Home({
     author: authorName(a.profiles),
     doAt: doMap.get(a.id as string) ?? null,
     done: doneSet.has(a.id as string),
+    isNew: !seenSet.has(a.id as string),
   }))
 
   // The one finding: what still needs attention (done items do not count)
   const open = items.filter((i) => !i.done)
+  const newCount = open.filter((i) => i.isNew).length
+  const overdue = open.filter((i) => dueStatus(i.due_at) === 'overdue').length
   const soon = open.filter((i) => dueStatus(i.due_at) === 'soon').length
-  const unplanned = open.filter((i) => {
-    const s = dueStatus(i.due_at)
-    return (s === 'soon' || s === 'ok') && !i.doAt
-  }).length
+  const later = open.filter((i) => dueStatus(i.due_at) === 'ok').length
 
   const parts: string[] = []
-  if (soon) parts.push(`${soon} due within 48 hours`)
-  if (unplanned) parts.push(`${unplanned} without a do date`)
+  if (newCount) parts.push(`${newCount} new`)
+  if (overdue) parts.push(`${overdue} overdue`)
+  if (soon) parts.push(`${soon} due soon`)
+  if (later) parts.push(`${later} due later`)
   const finding = error
     ? ''
     : items.length === 0
@@ -76,7 +92,7 @@ export default async function Home({
         ? 'All done.'
         : parts.length
           ? parts.join(' · ')
-          : 'Nothing due soon.'
+          : 'Nothing with a due date.'
 
   return (
     <Shell>

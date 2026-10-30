@@ -13,6 +13,9 @@ type Sort = 'due' | 'subject' | 'kind'
 
 const VIEW_KEY = 'board-view'
 const SORT_KEY = 'board-sort'
+const SUBJECT_KEY = 'board-subject'
+const KIND_KEY = 'board-kind'
+const ALL = 'All'
 
 // Groups keep the soonest-due-first order inside each group.
 function group(items: BoardItem[], sort: Sort) {
@@ -44,6 +47,8 @@ export function BoardView({
 }) {
   const [view, setView] = useState<View>('list')
   const [sort, setSort] = useState<Sort>('due')
+  const [subjectPick, setSubjectPick] = useState<string>(ALL)
+  const [kindPick, setKindPick] = useState<string>(ALL)
 
   // Remember the choice on this device
   useEffect(() => {
@@ -52,6 +57,10 @@ export function BoardView({
       const s = localStorage.getItem(SORT_KEY)
       if (v === 'list' || v === 'calendar') setView(v)
       if (s === 'due' || s === 'subject' || s === 'kind') setSort(s)
+      const sp = localStorage.getItem(SUBJECT_KEY)
+      const kp = localStorage.getItem(KIND_KEY)
+      if (sp && (sp === ALL || (SUBJECTS as readonly string[]).includes(sp))) setSubjectPick(sp)
+      if (kp && (kp === ALL || (KINDS as readonly string[]).includes(kp))) setKindPick(kp)
     } catch {
       // storage blocked: defaults are fine
     }
@@ -74,9 +83,39 @@ export function BoardView({
     }
   }
 
-  const open = items.filter((i) => !i.done)
-  const done = items.filter((i) => i.done)
-  const groups = group(open, sort)
+  function pickSubject(v: string) {
+    setSubjectPick(v)
+    try {
+      localStorage.setItem(SUBJECT_KEY, v)
+    } catch {
+      // ignore
+    }
+  }
+  function pickKind(v: string) {
+    setKindPick(v)
+    try {
+      localStorage.setItem(KIND_KEY, v)
+    } catch {
+      // ignore
+    }
+  }
+
+  // The chosen subject or type narrows both the list and the calendar
+  const pick = sort === 'subject' ? subjectPick : sort === 'kind' ? kindPick : ALL
+  const field = (i: BoardItem) =>
+    (sort === 'subject' ? i.subject : i.kind) ?? 'None'
+  const shown = pick === ALL ? items : items.filter((i) => field(i) === pick)
+
+  const open = shown.filter((i) => !i.done)
+  const done = shown.filter((i) => i.done)
+  // With one subject/type picked there is nothing to group
+  const groups = group(open, pick === ALL ? sort : 'due')
+
+  const choices =
+    sort === 'subject' ? SUBJECTS : sort === 'kind' ? KINDS : null
+  const noneLabel = sort === 'subject' ? 'No subject' : 'No type'
+  const countOf = (name: string) =>
+    items.filter((i) => !i.done && field(i) === name).length
 
   return (
     <>
@@ -125,12 +164,12 @@ export function BoardView({
         </p>
       )}
 
-      {view === 'calendar' && items.length > 0 && <DueCalendar items={items} />}
-
-      {view === 'list' && items.length > 0 && (
-        <>
+      {items.length > 0 && (
+        <div className="sortwrap">
           <div className="sortbar">
-            <span className="sortbar-label">Sort by</span>
+            <span className="sortbar-label">
+              {view === 'list' ? 'Sort by' : 'Filter by'}
+            </span>
             <div className="seg" role="group" aria-label="Sort by">
               <button
                 type="button"
@@ -156,6 +195,38 @@ export function BoardView({
             </div>
           </div>
 
+          {choices && (
+            <div
+              className="chips"
+              role="group"
+              aria-label={sort === 'subject' ? 'Pick a subject' : 'Pick a type'}
+            >
+              {[ALL, ...choices.filter((c) => c !== 'None'), 'None'].map((c) => {
+                const active = pick === c
+                const n = c === ALL ? items.filter((i) => !i.done).length : countOf(c)
+                const set = sort === 'subject' ? pickSubject : pickKind
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`chip ${n === 0 && !active ? 'chip-zero' : ''}`}
+                    aria-pressed={active}
+                    onClick={() => set(c)}
+                  >
+                    {c === 'None' ? noneLabel : c}
+                    <span>{n}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === 'calendar' && items.length > 0 && <DueCalendar items={shown} />}
+
+      {view === 'list' && items.length > 0 && (
+        <>
           {open.length === 0 && (
             <p className="empty">Nothing open. Everything is marked done.</p>
           )}
