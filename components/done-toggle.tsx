@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Check } from 'lucide-react'
 import { setDone } from '@/app/announcements/done-actions'
 
@@ -20,6 +20,29 @@ export function DoneToggle({
   const [done, setLocal] = useState(initialDone)
   const [err, setErr] = useState<string | null>(null)
   const [pending, start] = useTransition()
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  // A calm exit: the row tints, then folds away. Then the server moves it.
+  function animateOut(): Promise<() => void> {
+    const li = btnRef.current?.closest('li') as HTMLElement | null
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (!li || reduced) return Promise.resolve(() => {})
+
+    li.classList.add('row-leaving')
+    const reset = () => {
+      li.classList.remove('row-leaving', 'row-collapse')
+      li.style.height = ''
+    }
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        li.style.height = `${li.offsetHeight}px`
+        void li.offsetHeight // let the browser register the height
+        li.classList.add('row-collapse')
+        li.style.height = '0px'
+        setTimeout(() => resolve(reset), 280)
+      }, 380)
+    })
+  }
 
   // Follow the server after the page refreshes
   useEffect(() => setLocal(initialDone), [initialDone])
@@ -29,8 +52,10 @@ export function DoneToggle({
     setLocal(next)
     setErr(null)
     start(async () => {
+      const reset = variant === 'row' ? await animateOut() : () => {}
       const res = await setDone(announcementId, next)
       if (res.error) {
+        reset()
         setLocal(!next)
         setErr(res.error)
       }
@@ -41,6 +66,7 @@ export function DoneToggle({
     return (
       <div className="donecol">
         <button
+          ref={btnRef}
           type="button"
           onClick={toggle}
           disabled={pending}

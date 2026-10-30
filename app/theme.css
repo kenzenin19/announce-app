@@ -40,6 +40,7 @@
 
 h1,
 h2,
+h3,
 p,
 dl,
 dd,
@@ -533,6 +534,63 @@ h1.title {
   .has-pill .row-title {
     padding-right: 84px;
   }
+}
+
+/* ---------- Marking done: tint, then fold away ---------- */
+
+.row-leaving {
+  background: var(--accent-tint);
+  transition: background-color 200ms ease;
+}
+.row-leaving .row-title {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+}
+.row-leaving .btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.row-collapse {
+  opacity: 0;
+  overflow: hidden;
+  border-top-color: transparent;
+  transition: height 280ms ease, opacity 220ms ease;
+}
+
+/* ---------- My do dates ---------- */
+
+.day-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.day-h span {
+  color: var(--faint);
+  font-weight: 400;
+}
+.row.dorow {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+.dotime {
+  color: var(--accent);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.dorow-body {
+  min-width: 0;
+}
+.dorow-due {
+  margin-top: 6px;
+  display: flex;
+}
+.dorow-due .due {
+  justify-content: flex-start;
 }
 
 /* ---------- Done ---------- */

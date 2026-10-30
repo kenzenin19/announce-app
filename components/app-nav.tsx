@@ -28,7 +28,7 @@ export function AppNav({
           Announcements
         </Link>
         <Link href="/my-tasks" aria-current={cur(onTasks)}>
-          My tasks
+          My do dates
         </Link>
       </nav>
     )
@@ -48,7 +48,7 @@ export function AppNav({
       )}
       <Link href="/my-tasks" aria-current={cur(onTasks)}>
         <ListChecks size={20} strokeWidth={1.75} aria-hidden="true" />
-        My tasks
+        Do dates
       </Link>
     </nav>
   )
