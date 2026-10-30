@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
 import { createAnnouncement } from '../actions'
+import { KINDS, SUBJECTS } from '@/lib/options'
 
 export function NewAnnouncementForm() {
   const [state, formAction, pending] = useActionState(
@@ -26,6 +27,29 @@ export function NewAnnouncementForm() {
           required
           maxLength={200}
         />
+      </div>
+
+      <div className="field-row">
+        <div className="field">
+          <label htmlFor="subject">Subject</label>
+          <select id="subject" name="subject" className="input select" defaultValue="None">
+            {SUBJECTS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="kind">Type</label>
+          <select id="kind" name="kind" className="input select" defaultValue="None">
+            {KINDS.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="field">

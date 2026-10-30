@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
+import { AnnTags } from '@/components/ann-tags'
 import { DueBadge } from '@/components/due-badge'
 import { getCurrentUser } from '@/lib/auth'
 import { authorName, formatDateTime } from '@/lib/format'
@@ -22,7 +23,7 @@ export default async function AnnouncementPage({
     supabase
       .from('announcements')
       .select(
-        'id, title, body, due_at, created_at, created_by, profiles!announcements_created_by_fkey(name)'
+        'id, title, body, due_at, created_at, created_by, subject, kind, profiles!announcements_created_by_fkey(name)'
       )
       .eq('id', id)
       .maybeSingle(),
@@ -48,9 +49,10 @@ export default async function AnnouncementPage({
           <ArrowLeft size={16} aria-hidden="true" />
           Announcements
         </Link>
-        <h1 className="title" style={{ marginTop: 8 }}>
-          {a.title}
-        </h1>
+        <div style={{ marginTop: 8 }}>
+          <AnnTags subject={a.subject} kind={a.kind} />
+        </div>
+        <h1 className="title">{a.title}</h1>
       </div>
 
       <article className="panel panel-pad">

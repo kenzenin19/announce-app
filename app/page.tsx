@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
 import { DueBadge } from '@/components/due-badge'
+import { AnnTags } from '@/components/ann-tags'
 import { PostedBanner } from '@/components/posted-banner'
 import { PushToggle } from '@/components/push-toggle'
 import { getCurrentUser, canPost } from '@/lib/auth'
@@ -22,7 +23,7 @@ export default async function Home({
       supabase
         .from('announcements')
         .select(
-          'id, title, body, due_at, created_at, profiles!announcements_created_by_fkey(name)'
+          'id, title, body, due_at, created_at, subject, kind, profiles!announcements_created_by_fkey(name)'
         )
         .order('due_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
@@ -100,6 +101,7 @@ export default async function Home({
               <li key={a.id}>
                 <Link href={`/announcements/${a.id}`} className="row">
                   <div style={{ minWidth: 0 }}>
+                    <AnnTags subject={a.subject} kind={a.kind} />
                     <h2 className="row-title">{a.title}</h2>
                     {a.body && <p className="row-body">{a.body}</p>}
                     <p className="row-meta">
