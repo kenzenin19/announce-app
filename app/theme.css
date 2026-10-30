@@ -501,6 +501,40 @@ h1.title {
   font-weight: 500;
 }
 
+/* ---------- Phone row layout: pill top-right, due under the tags ---------- */
+
+.row {
+  position: relative;
+}
+.phone-only {
+  display: none;
+}
+.row-pill {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+.row-due {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  margin-bottom: 4px;
+}
+@media (max-width: 639px) {
+  .phone-only.row-pill {
+    display: block;
+  }
+  .phone-only.row-due {
+    display: flex;
+  }
+  .desk-only {
+    display: none !important;
+  }
+  .has-pill .row-title {
+    padding-right: 84px;
+  }
+}
+
 /* ---------- Done ---------- */
 
 .rowwrap {

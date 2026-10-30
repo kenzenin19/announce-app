@@ -30,23 +30,43 @@ function AnnRow({
   myDoAt?: string
 }) {
   const author = authorName(a.profiles)
+  const st = dueStatus(a.due_at)
+  const hasPill = !done && (st === 'overdue' || st === 'soon')
   return (
     <li className={`rowwrap ${done ? 'row-done' : ''}`}>
       <Link href={`/announcements/${a.id}`} className="row">
-        <div style={{ minWidth: 0 }}>
+        {/* Phones: the pill sits in the top-right corner */}
+        {!done && (
+          <span className="row-pill phone-only">
+            <DueBadge dueAt={a.due_at} variant="pill" />
+          </span>
+        )}
+        <div style={{ minWidth: 0 }} className={hasPill ? 'has-pill' : undefined}>
           <AnnTags subject={a.subject} kind={a.kind} />
+          {/* Phones: the due date sits under the subject and type */}
+          {!done && (
+            <p className="row-due phone-only">
+              <DueBadge dueAt={a.due_at} variant="text" />
+              {myDoAt ? (
+                <span className="do">Do {formatShort(myDoAt)}</span>
+              ) : null}
+            </p>
+          )}
           <h2 className="row-title">{a.title}</h2>
           {a.body && <p className="row-body">{a.body}</p>}
           <p className="row-meta">
             {author ? `Posted by ${author}` : 'Posted'}
           </p>
         </div>
-        <div className="row-side">
-          {!done && <DueBadge dueAt={a.due_at} />}
-          {!done && myDoAt ? (
-            <span className="do">Do {formatShort(myDoAt)}</span>
-          ) : null}
-        </div>
+        {/* Desktop: pill and date on the right */}
+        {!done && (
+          <div className="row-side desk-only">
+            <DueBadge dueAt={a.due_at} />
+            {myDoAt ? (
+              <span className="do">Do {formatShort(myDoAt)}</span>
+            ) : null}
+          </div>
+        )}
       </Link>
       <DoneToggle
         announcementId={a.id}
