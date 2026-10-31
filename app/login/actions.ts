@@ -19,6 +19,13 @@ export async function login(
 
   if (error) return { error: error.message }
 
+  // Admin activity log. Never block a login because of it.
+  try {
+    await supabase.rpc('log_login')
+  } catch {
+    // ignore
+  }
+
   revalidatePath('/', 'layout')
   redirect('/')
 }

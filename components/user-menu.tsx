@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { Settings } from 'lucide-react'
+import { Settings, ShieldCheck } from 'lucide-react'
 import { LogoutButton } from '@/components/logout-button'
 import './user-menu.css'
 
@@ -63,6 +63,16 @@ export function UserMenu({ name, role }: { name: string; role: string }) {
             <Settings size={16} strokeWidth={1.75} aria-hidden="true" />
             Settings
           </Link>
+          {role === 'admin' && (
+            <Link
+              href="/admin"
+              className="menu-link"
+              onClick={() => setOpen(false)}
+            >
+              <ShieldCheck size={16} strokeWidth={1.75} aria-hidden="true" />
+              Admin
+            </Link>
+          )}
           <div className="menu-act">
             <LogoutButton />
           </div>
