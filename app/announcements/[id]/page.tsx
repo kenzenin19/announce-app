@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import { Shell } from '@/components/app-shell'
 import { AnnTags } from '@/components/ann-tags'
 import { DoneToggle } from '@/components/done-toggle'
@@ -25,7 +25,7 @@ export default async function AnnouncementPage({
     supabase
       .from('announcements')
       .select(
-        'id, title, body, due_at, created_at, created_by, subject, kind, profiles!announcements_created_by_fkey(name)'
+        'id, title, body, due_at, created_at, updated_at, created_by, subject, kind, profiles!announcements_created_by_fkey(name)'
       )
       .eq('id', id)
       .maybeSingle(),
@@ -47,8 +47,10 @@ export default async function AnnouncementPage({
 
   if (!a) notFound()
 
+  // Admin can change any; a mod only the ones they posted (the database enforces this too)
   const canDelete =
     role === 'admin' || (role === 'mod' && a.created_by === user.id)
+  const canEdit = canDelete
   const author = authorName(a.profiles)
 
   return (
@@ -64,12 +66,23 @@ export default async function AnnouncementPage({
             <AnnTags subject={a.subject} kind={a.kind} />
             <h1 className="title">{a.title}</h1>
           </div>
-          <DoneToggle
-            announcementId={a.id}
-            initialDone={Boolean(doneRow)}
-            title={a.title}
-            variant="detail"
-          />
+          <div className="titlerow-actions">
+            {canEdit && (
+              <Link
+                href={`/announcements/${a.id}/edit`}
+                className="btn btn-secondary"
+              >
+                <Pencil size={16} strokeWidth={1.75} aria-hidden="true" />
+                Edit
+              </Link>
+            )}
+            <DoneToggle
+              announcementId={a.id}
+              initialDone={Boolean(doneRow)}
+              title={a.title}
+              variant="detail"
+            />
+          </div>
         </div>
       </div>
 
@@ -85,6 +98,12 @@ export default async function AnnouncementPage({
           <dd>{author ?? '—'}</dd>
           <dt>Posted</dt>
           <dd>{formatDateTime(a.created_at)}</dd>
+          {a.updated_at && (
+            <>
+              <dt>Edited</dt>
+              <dd>{formatDateTime(a.updated_at)}</dd>
+            </>
+          )}
         </dl>
 
         {a.body ? (

@@ -1,23 +1,57 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState, useState } from 'react'
-import { createAnnouncement } from '../actions'
+import { useActionState, useEffect, useRef } from 'react'
+import { createAnnouncement, updateAnnouncement } from '../actions'
 import { KINDS, SUBJECTS } from '@/lib/options'
 
-export function NewAnnouncementForm() {
+export type AnnouncementInitial = {
+  id: string
+  title: string
+  body: string
+  due_at: string | null
+  subject: string | null
+  kind: string | null
+}
+
+// "2026-11-05T15:00" in the browser's own timezone, which is what the
+// datetime-local box expects (and how the form turns it back into a full time).
+function toLocalInput(iso: string) {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(
+    d.getHours()
+  )}:${p(d.getMinutes())}`
+}
+
+// One form for both posting and editing. Pass `initial` to edit.
+export function AnnouncementForm({ initial }: { initial?: AnnouncementInitial }) {
+  const editing = Boolean(initial)
   const [state, formAction, pending] = useActionState(
-    createAnnouncement,
+    initial ? updateAnnouncement.bind(null, initial.id) : createAnnouncement,
     undefined
   )
 
   // The datetime-local box gives a time with no timezone. We convert it to a
-  // full ISO time in the browser so the server stores the right moment.
-  const [due, setDue] = useState('')
-  const dueIso = due ? new Date(due).toISOString() : ''
+  // full ISO time in the browser (when you press the button) so the server
+  // stores the right moment.
+  const dueRef = useRef<HTMLInputElement>(null)
+
+  // Fill in the current due date in the browser (after load, so it matches the browser's timezone)
+  const initialDue = initial?.due_at ?? null
+  useEffect(() => {
+    if (dueRef.current && initialDue) dueRef.current.value = toLocalInput(initialDue)
+  }, [initialDue])
+
+  function submit(formData: FormData) {
+    const v = dueRef.current?.value ?? ''
+    formData.set('due_at', v ? new Date(v).toISOString() : '')
+    formAction(formData)
+  }
 
   return (
-    <form action={formAction} className="form">
+    <form action={submit} className="form">
       <div className="field">
         <label htmlFor="title">Title</label>
         <input
@@ -26,13 +60,19 @@ export function NewAnnouncementForm() {
           className="input"
           required
           maxLength={200}
+          defaultValue={initial?.title ?? ''}
         />
       </div>
 
       <div className="field-row">
         <div className="field">
           <label htmlFor="subject">Subject</label>
-          <select id="subject" name="subject" className="input select" defaultValue="None">
+          <select
+            id="subject"
+            name="subject"
+            className="input select"
+            defaultValue={initial?.subject ?? 'None'}
+          >
             {SUBJECTS.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -42,7 +82,12 @@ export function NewAnnouncementForm() {
         </div>
         <div className="field">
           <label htmlFor="kind">Type</label>
-          <select id="kind" name="kind" className="input select" defaultValue="None">
+          <select
+            id="kind"
+            name="kind"
+            className="input select"
+            defaultValue={initial?.kind ?? 'None'}
+          >
             {KINDS.map((k) => (
               <option key={k} value={k}>
                 {k}
@@ -54,7 +99,13 @@ export function NewAnnouncementForm() {
 
       <div className="field">
         <label htmlFor="body">Details</label>
-        <textarea id="body" name="body" rows={6} className="textarea" />
+        <textarea
+          id="body"
+          name="body"
+          rows={6}
+          className="textarea"
+          defaultValue={initial?.body ?? ''}
+        />
       </div>
 
       <div className="field">
@@ -63,11 +114,9 @@ export function NewAnnouncementForm() {
           id="due"
           type="datetime-local"
           className="input"
-          value={due}
-          onChange={(e) => setDue(e.target.value)}
+          ref={dueRef}
           aria-describedby="due-hint"
         />
-        <input type="hidden" name="due_at" value={dueIso} />
         <p id="due-hint" className="hint">
           Optional. Leave it empty for an announcement with no deadline.
         </p>
@@ -81,12 +130,26 @@ export function NewAnnouncementForm() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button type="submit" className="btn btn-primary" disabled={pending}>
-          {pending ? 'Posting...' : 'Post announcement'}
+          {editing
+            ? pending
+              ? 'Saving...'
+              : 'Save changes'
+            : pending
+              ? 'Posting...'
+              : 'Post announcement'}
         </button>
-        <Link href="/" className="btn btn-secondary">
+        <Link
+          href={initial ? `/announcements/${initial.id}` : '/'}
+          className="btn btn-secondary"
+        >
           Cancel
         </Link>
       </div>
     </form>
   )
+}
+
+// Kept so the New page keeps working unchanged
+export function NewAnnouncementForm() {
+  return <AnnouncementForm />
 }

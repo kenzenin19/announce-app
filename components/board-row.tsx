@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useId, useState } from 'react'
-import { Maximize2, Minimize2 } from 'lucide-react'
+import { Maximize2, Minimize2, Pencil } from 'lucide-react'
 import { AnnTags } from '@/components/ann-tags'
 import { DoneToggle } from '@/components/done-toggle'
 import { DueBadge } from '@/components/due-badge'
@@ -95,15 +95,25 @@ export function BoardRow({ a }: { a: BoardItem }) {
             <p className="expand-meta">
               {a.author ? `Posted by ${a.author}` : 'Posted'} ·{' '}
               {formatDateTime(a.created_at)}
+              {a.updated_at ? ` · Edited ${formatDateTime(a.updated_at)}` : ''}
               {a.doAt ? ` · Do ${formatShort(a.doAt)}` : ''}
             </p>
-            <div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link
                 href={`/announcements/${a.id}`}
                 className="btn btn-secondary btn-sm"
               >
                 Open announcement
               </Link>
+              {a.canEdit && (
+                <Link
+                  href={`/announcements/${a.id}/edit`}
+                  className="btn btn-secondary btn-sm"
+                >
+                  <Pencil size={14} strokeWidth={1.75} aria-hidden="true" />
+                  Edit
+                </Link>
+              )}
             </div>
           </div>
         </div>

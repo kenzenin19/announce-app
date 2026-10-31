@@ -26,7 +26,7 @@ export default async function Home({
       supabase
         .from('announcements')
         .select(
-          'id, title, body, due_at, created_at, subject, kind, profiles!announcements_created_by_fkey(name)'
+          'id, title, body, due_at, created_at, updated_at, created_by, subject, kind, profiles!announcements_created_by_fkey(name)'
         )
         .order('due_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
@@ -64,12 +64,17 @@ export default async function Home({
     body: (a.body as string) ?? '',
     due_at: a.due_at as string | null,
     created_at: a.created_at as string,
+    updated_at: (a.updated_at as string | null) ?? null,
     subject: a.subject as string | null,
     kind: a.kind as string | null,
     author: authorName(a.profiles),
     doAt: doMap.get(a.id as string) ?? null,
     done: doneSet.has(a.id as string),
     isNew: !seenSet.has(a.id as string),
+    // Admin can edit any; a mod only their own
+    canEdit:
+      role === 'admin' ||
+      (role === 'mod' && (a.created_by as string | null) === user.id),
   }))
 
   // The one finding: what still needs attention (done items do not count)
