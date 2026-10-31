@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatShort } from '@/lib/format'
-import { PushToggle } from '@/components/push-toggle'
 
 type Notif = {
   id: string
@@ -133,8 +132,6 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-
-          <PushToggle variant="compact" />
 
           {items.length === 0 ? (
             <p className="empty" style={{ margin: 16 }}>

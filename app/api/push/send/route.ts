@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const admin = createAdminClient()
     const { data: n, error } = await admin
       .from('notifications')
-      .select('id, user_id, announcement_id, message')
+      .select('id, user_id, announcement_id, message, kind')
       .eq('id', id)
       .maybeSingle()
 
@@ -45,6 +45,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     if (!n) return NextResponse.json({ ok: true, skipped: 'notification not found' })
+
+    // This person's choice (no saved choice = on + Default, like before)
+    const { data: pref } = await admin
+      .from('notification_settings')
+      .select('push_enabled, push_mode')
+      .eq('user_id', n.user_id)
+      .maybeSingle()
+    const enabled = pref?.push_enabled ?? true
+    const mode = pref?.push_mode === 'light' ? 'light' : 'default'
+    const kind = (n.kind as string | null) ?? 'normal'
+
+    // Off: no pushes. Light: only the daily summary and your own do-date reminders.
+    // Default: everything except the daily summary.
+    if (!enabled) return NextResponse.json({ ok: true, skipped: 'notifications off' })
+    if (mode === 'light' && kind === 'normal') {
+      return NextResponse.json({ ok: true, skipped: 'light mode' })
+    }
+    if (mode === 'default' && kind === 'summary') {
+      return NextResponse.json({ ok: true, skipped: 'summary is for light mode' })
+    }
 
     const result = await sendPushToUser(n.user_id, {
       title: 'CSB Announcements',

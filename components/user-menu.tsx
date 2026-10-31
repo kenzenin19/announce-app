@@ -1,7 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { Settings } from 'lucide-react'
 import { LogoutButton } from '@/components/logout-button'
+import './user-menu.css'
 
 // Each person gets a stable pale tint of their own hue (identity, not data).
 function tint(name: string) {
@@ -52,6 +55,14 @@ export function UserMenu({ name, role }: { name: string; role: string }) {
             <strong>{name}</strong>
             <span>{role}</span>
           </div>
+          <Link
+            href="/settings"
+            className="menu-link"
+            onClick={() => setOpen(false)}
+          >
+            <Settings size={16} strokeWidth={1.75} aria-hidden="true" />
+            Settings
+          </Link>
           <div className="menu-act">
             <LogoutButton />
           </div>
